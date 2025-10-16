@@ -1,10 +1,10 @@
-const path = require('path');
-const config = require('../config');
-const { listHtmlFiles, prepDir } = require('../utils/filesystem');
-const { extractBlogDate, extractBlogHeading, extractBlogImage } = require('../utils/metadata-extractor');
-const { generateBlogFrontmatter } = require('../utils/frontmatter-generator');
-const { downloadProductImage, downloadEmbeddedImages } = require('../utils/image-downloader');
-const { createConverter } = require('../utils/base-converter');
+const path = require('path')
+const config = require('../config')
+const { listHtmlFiles } = require('../utils/filesystem')
+const { extractBlogDate, extractBlogHeading, extractBlogImage } = require('../utils/metadata-extractor')
+const { generateBlogFrontmatter } = require('../utils/frontmatter-generator')
+const { downloadProductImage, downloadEmbeddedImages } = require('../utils/image-downloader')
+const { createConverter } = require('../utils/base-converter')
 
 const { convertSingle, convertBatch } = createConverter({
   contentType: 'blog',
@@ -15,34 +15,34 @@ const { convertSingle, convertBatch } = createConverter({
   },
   beforeWrite: async (content, extracted, slug) => {
     if (extracted.blogImage) {
-      extracted.localImagePath = await downloadProductImage(extracted.blogImage, slug);
+      extracted.localImagePath = await downloadProductImage(extracted.blogImage, slug)
     }
-    return await downloadEmbeddedImages(content, 'news', slug);
+    return await downloadEmbeddedImages(content, 'news', slug)
   },
   frontmatterGenerator: (metadata, slug, extracted) => ({
     frontmatter: generateBlogFrontmatter(metadata, slug, extracted.date, extracted.blogHeading, extracted.localImagePath),
     filename: `${extracted.date}-${slug}.md`
   })
-});
+})
 
 /**
  * Convert all blog posts from old site to markdown
  * @returns {Promise<Object>} Conversion results
  */
 const convertBlogPosts = async () => {
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.news);
-  const blogDir = path.join(config.OLD_SITE_PATH, config.paths.blog);
-  const files = listHtmlFiles(blogDir);
+  const outputDir = path.join(config.OUTPUT_BASE, config.paths.news)
+  const blogDir = path.join(config.OLD_SITE_PATH, config.paths.blog)
+  const files = listHtmlFiles(blogDir)
 
-  const result = await convertBatch(files, blogDir, outputDir);
-  console.log(`✓ News: ${result.successful}/${result.total}`);
-  return result;
-};
+  const result = await convertBatch(files, blogDir, outputDir)
+  console.log(`✓ News: ${result.successful}/${result.total}`)
+  return result
+}
 
 const convertBlogPost = (file, inputDir, outputDir) =>
-  convertSingle(file, inputDir, outputDir);
+  convertSingle(file, inputDir, outputDir)
 
 module.exports = {
   convertBlogPost,
   convertBlogPosts
-};
+}

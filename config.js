@@ -1,13 +1,13 @@
-const path = require('path');
-const fs = require('fs');
+const path = require('path')
+const fs = require('fs')
 
 // Configuration for the importer
 const config = {
   OLD_SITE_PATH: path.join(__dirname, 'old_site'),
   OUTPUT_BASE: path.join(__dirname, 'output'),
 
-  // Output format: 'markdown' or 'json'
-  OUTPUT_FORMAT: process.env.OUTPUT_FORMAT || 'markdown',
+  // Output format: 'markdown' or 'json' (required, set via import.js)
+  OUTPUT_FORMAT: process.env.OUTPUT_FORMAT,
 
   // Default values for content
   DEFAULT_DATE: '2020-01-01',
@@ -21,22 +21,22 @@ const config = {
     blog: 'blog', // Source directory in old site
     favicon: 'assets/favicon'
   }
-};
+}
 
 // Load importer options
 const loadOptions = () => {
-  const optionsPath = path.join(__dirname, 'importer-options.json');
+  const optionsPath = path.join(__dirname, 'importer-options.json')
   if (fs.existsSync(optionsPath)) {
     try {
-      return JSON.parse(fs.readFileSync(optionsPath, 'utf8'));
-    } catch (error) {
-      console.warn('Warning: Failed to parse importer-options.json, using defaults');
-      return {};
+      return JSON.parse(fs.readFileSync(optionsPath, 'utf8'))
+    } catch (_error) {
+      console.warn('Warning: Failed to parse importer-options.json, using defaults')
+      return {}
     }
   }
-  return {};
-};
+  return {}
+}
 
-config.options = loadOptions();
+config.options = loadOptions()
 
-module.exports = config;
+module.exports = config
