@@ -1,0 +1,11 @@
+# Importer directories
+old_site/
+output/
+wget_temp/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*

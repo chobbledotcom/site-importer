@@ -35,7 +35,7 @@ const checkPandoc = () => {
  * Clean the images directory before importing
  */
 const cleanImagesDirectory = () => {
-  const imagesDir = path.join(__dirname, '..', '..', 'images');
+  const imagesDir = path.join(config.OUTPUT_BASE, 'images');
 
   if (fs.existsSync(imagesDir)) {
     console.log('Cleaning images directory...');

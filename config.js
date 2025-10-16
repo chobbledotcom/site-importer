@@ -3,8 +3,8 @@ const fs = require('fs');
 
 // Configuration for the importer
 const config = {
-  OLD_SITE_PATH: path.join(__dirname, '../../old_site'),
-  OUTPUT_BASE: path.join(__dirname, '../..'),
+  OLD_SITE_PATH: path.join(__dirname, 'old_site'),
+  OUTPUT_BASE: path.join(__dirname, 'output'),
 
   // Default values for content
   DEFAULT_DATE: '2020-01-01',
@@ -22,7 +22,7 @@ const config = {
 
 // Load importer options
 const loadOptions = () => {
-  const optionsPath = path.join(__dirname, '../../_data/importer-options.json');
+  const optionsPath = path.join(__dirname, 'importer-options.json');
   if (fs.existsSync(optionsPath)) {
     try {
       return JSON.parse(fs.readFileSync(optionsPath, 'utf8'));
