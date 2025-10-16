@@ -1,6 +1,6 @@
 const path = require('path');
 const config = require('../config');
-const { listHtmlFiles, prepDir, writeMarkdownFile } = require('../utils/filesystem');
+const { listHtmlFiles } = require('../utils/filesystem');
 const { extractPrice, extractReviews, extractProductName, extractProductImages, extractContentHeading } = require('../utils/metadata-extractor');
 const { generateProductFrontmatter, generateReviewFrontmatter } = require('../utils/frontmatter-generator');
 const { downloadProductImage, downloadEmbeddedImages } = require('../utils/image-downloader');
@@ -76,8 +76,6 @@ const convertProducts = async () => {
     return { successful: 0, failed: 0, total: 0 };
   }
 
-  // Products directory only contains imported products, safe to clean all
-  prepDir(outputDir);
 
   console.log('  Scanning categories for product relationships...');
   const productCategoriesMap = scanProductCategories();
@@ -86,33 +84,25 @@ const convertProducts = async () => {
   const result = await convertBatch(files, productsDir, outputDir, { reviewsMap, productCategoriesMap });
 
   if (reviewsMap.size > 0) {
-    const { ensureDir } = require('../utils/filesystem');
-    ensureDir(reviewsDir);
-
-    // Only delete reviews that will be regenerated from products
-    // (preserve Google reviews which have -google- in their filename)
-    const generatedReviewNames = new Set(
-      Array.from(reviewsMap.keys()).map(slug => `${slug}.md`)
-    );
-
-    const fs = require('fs');
-    if (fs.existsSync(reviewsDir)) {
-      const existingReviews = fs.readdirSync(reviewsDir);
-      existingReviews.forEach(filename => {
-        if (generatedReviewNames.has(filename)) {
-          fs.unlinkSync(path.join(reviewsDir, filename));
-        }
-      });
-    }
+    const { getExporter } = require('../utils/json-exporter');
+    const exporter = getExporter();
 
     reviewsMap.forEach((reviewData, slug) => {
       const reviewFilename = `${slug}.md`;
       const productsYaml = reviewData.products.map(p => `"${p}"`).join(', ');
       const frontmatter = `---\nname: "${reviewData.name}"\nproducts: [${productsYaml}]\nrating: 5\n---`;
-      const reviewContent = `${frontmatter}\n\n${reviewData.body}`;
-      writeMarkdownFile(path.join(reviewsDir, reviewFilename), reviewContent);
+
+      exporter.addReview({
+        slug,
+        filename: reviewFilename,
+        name: reviewData.name,
+        products: reviewData.products,
+        rating: 5,
+        content: reviewData.body,
+        frontmatter
+      });
     });
-    console.log(`  Created ${reviewsMap.size} unique review file(s)`);
+    console.log(`  Collected ${reviewsMap.size} unique review(s)`);
   }
 
   return result;

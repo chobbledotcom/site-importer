@@ -28,7 +28,7 @@ npm run import <url>
 
 Example:
 ```bash
-npm run import https://www.myalarmsecurity.co.uk
+npm run import https://www.example.com
 ```
 
 ### JSON Output
@@ -39,7 +39,7 @@ npm run import <url> --format=json
 
 Example:
 ```bash
-npm run import https://www.myalarmsecurity.co.uk --format=json
+npm run import https://www.example.com --format=json
 ```
 
 This will create a single `content.json` file with all content and images still downloaded to the images directory.

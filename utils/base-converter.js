@@ -70,38 +70,26 @@ const createConverter = ({
       const frontmatter = result.frontmatter || result;
       filename = result.filename || filename;
 
-      // Handle output format
-      if (config.OUTPUT_FORMAT === 'json') {
-        // Collect data for JSON export
-        const exporter = getExporter();
-        const itemData = {
-          slug,
-          filename,
-          metadata,
-          content,
-          ...extracted
-        };
+      const exporter = getExporter();
+      const itemData = {slug, filename, metadata, content, frontmatter, ...extracted};
 
-        // Add to appropriate collection
-        if (contentType === 'page') {
+      switch (contentType) {
+        case 'page':
           exporter.addPage(itemData);
-        } else if (contentType === 'blog') {
+          break;
+        case 'blog':
           exporter.addNews(itemData);
-        } else if (contentType === 'product') {
+          break;
+        case 'product':
           exporter.addProduct(itemData);
-        } else if (contentType === 'category') {
+          break;
+        case 'category':
           exporter.addCategory(itemData);
-        }
-
-        console.log(`  Collected: ${filename}`);
-      } else {
-        // Write markdown file
-        const fullContent = `${frontmatter}\n\n${content}`;
-        writeMarkdownFile(path.join(outputDir, filename), fullContent);
-        console.log(`  Converted: ${filename}`);
+          break;
       }
 
-      // Hook after conversion (e.g., track reviews)
+      console.log(`  Collected: ${filename}`);
+
       if (afterConvert) {
         await afterConvert(extracted, slug, context);
       }

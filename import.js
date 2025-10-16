@@ -1,97 +1,29 @@
 #!/usr/bin/env node
 
-/**
- * Main import script
- * Usage: npm run import https://www.myalarmsecurity.co.uk [--format=json]
- */
-
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
-
-// Parse arguments
-const args = process.argv.slice(2);
-const SITE_URL = args.find(arg => !arg.startsWith('--'));
-const formatArg = args.find(arg => arg.startsWith('--format='));
-const OUTPUT_FORMAT = formatArg ? formatArg.split('=')[1] : 'markdown';
+const { parseArgs, validateArgs } = require('./utils/cli-args');
+const { cleanDirectory } = require('./utils/directory-cleaner');
+const { downloadSite } = require('./utils/site-downloader');
 
 const OLD_SITE_DIR = path.join(__dirname, 'old_site');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 
-if (!SITE_URL) {
-  console.error('❌ ERROR: No URL provided!');
-  console.error('Usage: npm run import <url> [--format=json|markdown]');
-  console.error('Example: npm run import https://www.myalarmsecurity.co.uk');
-  console.error('Example: npm run import https://www.myalarmsecurity.co.uk --format=json');
-  process.exit(1);
-}
-
-if (!['markdown', 'json'].includes(OUTPUT_FORMAT)) {
-  console.error('❌ ERROR: Invalid format! Must be "markdown" or "json"');
-  process.exit(1);
-}
+const { siteUrl, outputFormat } = parseArgs(process.argv);
+validateArgs(siteUrl, outputFormat);
 
 console.log('🚀 Starting import process...\n');
 
-// Step 1: Delete existing output directory
-console.log('📁 Cleaning output directory...');
-if (fs.existsSync(OUTPUT_DIR)) {
-  fs.rmSync(OUTPUT_DIR, { recursive: true, force: true });
-  console.log('✓ Output directory cleaned\n');
-}
+cleanDirectory(OUTPUT_DIR, 'output directory');
+cleanDirectory(OLD_SITE_DIR, 'old_site directory');
 
-// Step 2: Delete existing old_site directory
-console.log('📁 Cleaning old_site directory...');
-if (fs.existsSync(OLD_SITE_DIR)) {
-  fs.rmSync(OLD_SITE_DIR, { recursive: true, force: true });
-  console.log('✓ Old_site directory cleaned\n');
-}
-
-// Step 3: Create old_site directory
 fs.mkdirSync(OLD_SITE_DIR, { recursive: true });
 
-// Step 4: wget the site
-console.log(`📥 Downloading site from ${SITE_URL}...`);
-const wgetTempDir = path.join(__dirname, 'wget_temp');
-try {
-  // Download to temp directory first
-  execSync(
-    `wget --recursive --no-parent --page-requisites --adjust-extension --no-clobber --directory-prefix="${wgetTempDir}" "${SITE_URL}"`,
-    { stdio: 'inherit' }
-  );
+downloadSite(siteUrl, OLD_SITE_DIR);
 
-  // Extract domain name from URL
-  const urlObj = new URL(SITE_URL);
-  const domain = urlObj.hostname;
-  const downloadedSitePath = path.join(wgetTempDir, domain);
+process.env.OUTPUT_FORMAT = outputFormat;
+console.log(`📝 Output format: ${outputFormat}\n`);
 
-  // Move contents to old_site directory
-  if (fs.existsSync(downloadedSitePath)) {
-    const files = fs.readdirSync(downloadedSitePath);
-    files.forEach(file => {
-      const srcPath = path.join(downloadedSitePath, file);
-      const destPath = path.join(OLD_SITE_DIR, file);
-      fs.renameSync(srcPath, destPath);
-    });
-    // Clean up temp directory
-    fs.rmSync(wgetTempDir, { recursive: true, force: true });
-  }
-
-  console.log('✓ Site downloaded successfully\n');
-} catch (error) {
-  console.error('❌ Failed to download site:', error.message);
-  // Clean up temp directory on error
-  if (fs.existsSync(wgetTempDir)) {
-    fs.rmSync(wgetTempDir, { recursive: true, force: true });
-  }
-  process.exit(1);
-}
-
-// Step 5: Set output format in environment
-process.env.OUTPUT_FORMAT = OUTPUT_FORMAT;
-console.log(`📝 Output format: ${OUTPUT_FORMAT}\n`);
-
-// Step 6: Run the converter
 console.log('🔄 Converting content...\n');
 try {
   const { main } = require('./index.js');
