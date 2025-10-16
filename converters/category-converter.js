@@ -27,19 +27,18 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertCategories = async () => {
-  console.log('Converting categories...');
-
   const outputDir = path.join(config.OUTPUT_BASE, config.paths.categories);
   const categoriesDir = path.join(config.OLD_SITE_PATH, config.paths.categories);
   const files = listHtmlFiles(categoriesDir);
 
-
   if (files.length === 0) {
-    console.log('  No categories directory found, skipping...');
+    console.log('✓ Categories: 0/0');
     return { successful: 0, failed: 0, total: 0 };
   }
 
-  return await convertBatch(files, categoriesDir, outputDir);
+  const result = await convertBatch(files, categoriesDir, outputDir);
+  console.log(`✓ Categories: ${result.successful}/${result.total}`);
+  return result;
 };
 
 const convertCategory = (file, inputDir, outputDir) =>

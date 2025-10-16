@@ -47,11 +47,13 @@ This will create a single `content.json` file with all content and images still 
 ## What it does
 
 1. Deletes any existing `output/` directory
-2. Deletes any existing `old_site/` directory  
-3. Downloads the site using wget to `old_site/`
-4. Converts HTML content to markdown
+2. Checks if `old_site/` exists - if yes, reuses it; if no, downloads the site
+3. Converts HTML content and builds internal data structure
+4. Validates data structure integrity
 5. Downloads and organizes images
-6. Outputs everything to `./output/`
+6. Outputs in selected format (JSON or Markdown)
+7. Validates output (markdown files only)
+8. Reports test results
 
 ## Output Structure
 
@@ -91,6 +93,44 @@ The JSON file structure:
     "format_version": "1.0"
   }
 }
+```
+
+## Testing & Validation
+
+The importer includes built-in validation tests that run automatically:
+
+**Data Structure Tests:**
+- Validates all required fields are present
+- Checks for duplicate slugs
+- Verifies frontmatter format
+- Ensures content has proper H1 headings
+- Validates metadata completeness
+
+**Markdown Output Tests (markdown mode only):**
+- Verifies all files have valid frontmatter
+- Checks content structure
+- Validates image references exist
+- Ensures proper filename formatting
+- Verifies no duplicate files
+
+Tests run automatically after conversion and will fail the import if validation fails.
+
+## Development Workflow
+
+**First run:** Downloads the site
+```bash
+npm run import https://www.example.com
+```
+
+**Subsequent runs:** Reuses downloaded site (much faster)
+```bash
+npm run import https://www.example.com
+```
+
+**Force re-download:** Delete old_site directory first
+```bash
+rm -rf old_site
+npm run import https://www.example.com
 ```
 
 ## Configuration

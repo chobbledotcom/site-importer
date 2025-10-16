@@ -23,26 +23,25 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertPages = async () => {
-  console.log('Converting pages...');
-
   const outputDir = path.join(config.OUTPUT_BASE, config.paths.pages);
   const pagesDir = path.join(config.OLD_SITE_PATH, 'pages');
   const pageFiles = listHtmlFiles(pagesDir);
 
-  // Convert root-level pages (contact only - reviews handled by reviews-index-converter)
   const rootPages = ['contact.php.html'].filter(file =>
     fs.existsSync(path.join(config.OLD_SITE_PATH, file))
   );
 
-
   const pagesResult = await convertBatch(pageFiles, pagesDir, outputDir);
   const rootResult = await convertBatch(rootPages, config.OLD_SITE_PATH, outputDir);
 
-  return {
+  const result = {
     successful: pagesResult.successful + rootResult.successful,
     failed: pagesResult.failed + rootResult.failed,
     total: pagesResult.total + rootResult.total
   };
+
+  console.log(`✓ Pages: ${result.successful}/${result.total}`);
+  return result;
 };
 
 const convertPage = (file, inputDir, outputDir) =>

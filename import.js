@@ -15,16 +15,18 @@ validateArgs(siteUrl, outputFormat);
 console.log('🚀 Starting import process...\n');
 
 cleanDirectory(OUTPUT_DIR, 'output directory');
-cleanDirectory(OLD_SITE_DIR, 'old_site directory');
 
-fs.mkdirSync(OLD_SITE_DIR, { recursive: true });
-
-downloadSite(siteUrl, OLD_SITE_DIR);
+if (fs.existsSync(OLD_SITE_DIR)) {
+  console.log('📁 Using existing old_site directory (skipping download)');
+  console.log('   To re-download, delete the old_site directory first\n');
+} else {
+  fs.mkdirSync(OLD_SITE_DIR, { recursive: true });
+  downloadSite(siteUrl, OLD_SITE_DIR);
+}
 
 process.env.OUTPUT_FORMAT = outputFormat;
 console.log(`📝 Output format: ${outputFormat}\n`);
 
-console.log('🔄 Converting content...\n');
 try {
   const { main } = require('./index.js');
   main();

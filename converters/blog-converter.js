@@ -30,14 +30,13 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertBlogPosts = async () => {
-  console.log('Converting blog posts to news...');
-
   const outputDir = path.join(config.OUTPUT_BASE, config.paths.news);
   const blogDir = path.join(config.OLD_SITE_PATH, config.paths.blog);
   const files = listHtmlFiles(blogDir);
 
-
-  return await convertBatch(files, blogDir, outputDir);
+  const result = await convertBatch(files, blogDir, outputDir);
+  console.log(`✓ News: ${result.successful}/${result.total}`);
+  return result;
 };
 
 const convertBlogPost = (file, inputDir, outputDir) =>

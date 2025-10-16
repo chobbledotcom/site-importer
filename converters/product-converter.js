@@ -64,22 +64,17 @@ const convertProduct = (file, inputDir, outputDir, reviewsDir, reviewsMap, produ
  * @returns {Promise<Object>} Conversion results
  */
 const convertProducts = async () => {
-  console.log('Converting products...');
-
   const outputDir = path.join(config.OUTPUT_BASE, config.paths.products);
   const reviewsDir = path.join(config.OUTPUT_BASE, 'reviews');
   const productsDir = path.join(config.OLD_SITE_PATH, config.paths.products);
   const files = listHtmlFiles(productsDir);
 
   if (files.length === 0) {
-    console.log('  No products directory found, skipping...');
+    console.log('✓ Products: 0/0');
     return { successful: 0, failed: 0, total: 0 };
   }
 
-
-  console.log('  Scanning categories for product relationships...');
   const productCategoriesMap = scanProductCategories();
-
   const reviewsMap = new Map();
   const result = await convertBatch(files, productsDir, outputDir, { reviewsMap, productCategoriesMap });
 
@@ -102,7 +97,9 @@ const convertProducts = async () => {
         frontmatter
       });
     });
-    console.log(`  Collected ${reviewsMap.size} unique review(s)`);
+    console.log(`✓ Products: ${result.successful}/${result.total}, Reviews: ${reviewsMap.size}`);
+  } else {
+    console.log(`✓ Products: ${result.successful}/${result.total}`);
   }
 
   return result;

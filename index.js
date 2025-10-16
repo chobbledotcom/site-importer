@@ -14,6 +14,8 @@ const { applyFindReplacesRecursive } = require('./utils/find-replace');
 const ResultsTracker = require('./utils/results-tracker');
 const { getExporter } = require('./utils/json-exporter');
 const { writeMarkdownFiles } = require('./utils/markdown-writer');
+const { runDataStructureTests } = require('./tests/data-structure-tests');
+const { runMarkdownOutputTests } = require('./tests/markdown-output-tests');
 const config = require('./config');
 
 /**
@@ -53,47 +55,34 @@ const cleanImagesDirectory = () => {
  * Main execution function
  */
 const main = async () => {
-  console.log('Starting conversion of old MyAlarm Security site...\n');
-
-  // Check for required dependencies
   checkPandoc();
 
   const startTime = Date.now();
   const tracker = new ResultsTracker();
 
   try {
-    cleanImagesDirectory();
-
     const oldSitePath = config.OLD_SITE_PATH;
     const faviconOutputPath = path.join(config.OUTPUT_BASE, config.paths.favicon);
     tracker.add('Favicons', extractFavicons(oldSitePath, faviconOutputPath));
-    console.log('');
 
     tracker.add('Homepage Content', await convertHomeContent());
-    console.log('');
-
     tracker.add('Pages', await convertPages());
-    console.log('');
-
     tracker.add('Special Pages', await convertSpecialPages());
-    console.log('');
-
     tracker.add('Blog Posts', await convertBlogPosts());
-    console.log('');
-
     tracker.add('Products', await convertProducts());
-    console.log('');
-
     tracker.add('Categories', await convertCategories());
-    console.log('');
-
     tracker.add('Blog Index', convertBlogIndex());
-    console.log('');
-
     tracker.add('Reviews Index', await convertReviewsIndex());
+
     console.log('');
 
     const exporter = getExporter();
+
+    const dataTestsPassed = await runDataStructureTests(exporter);
+    if (!dataTestsPassed) {
+      console.error('\n❌ Data structure validation failed!');
+      process.exit(1);
+    }
 
     if (config.OUTPUT_FORMAT === 'json') {
       const jsonPath = path.join(config.OUTPUT_BASE, 'content.json');
@@ -108,6 +97,12 @@ const main = async () => {
         applyFindReplacesRecursive(dirPath);
       });
       console.log('✓ Find/replace patterns applied\n');
+
+      const markdownTestsPassed = await runMarkdownOutputTests();
+      if (!markdownTestsPassed) {
+        console.error('\n❌ Markdown output validation failed!');
+        process.exit(1);
+      }
     }
 
     tracker.displaySummary();

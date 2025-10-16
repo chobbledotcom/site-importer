@@ -88,8 +88,6 @@ const createConverter = ({
           break;
       }
 
-      console.log(`  Collected: ${filename}`);
-
       if (afterConvert) {
         await afterConvert(extracted, slug, context);
       }
