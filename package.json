@@ -1,0 +1,15 @@
+{
+  "name": "site-importer",
+  "version": "1.0.0",
+  "description": "Site importer for converting old site content",
+  "main": "index.js",
+  "scripts": {
+    "import": "node import.js"
+  },
+  "keywords": ["importer", "converter"],
+  "author": "Terragon Labs",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

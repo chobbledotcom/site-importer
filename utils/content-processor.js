@@ -1,5 +1,4 @@
-const { parseSpecificationTables } = require('./markdown-table-parser');
-const { extractSpecificationTable, extractPriceTable } = require('./html-table-extractor');
+const { extractSpecificationTable, extractPriceTable } = require('./html-table-extractor')
 
 /**
  * Extract main content from markdown (remove nav, footer, etc.)
@@ -8,19 +7,19 @@ const { extractSpecificationTable, extractPriceTable } = require('./html-table-e
  * @returns {string} Extracted main content
  */
 const extractMainContent = (markdown, contentType) => {
-  const lines = markdown.split('\n');
-  let content = [];
-  let inMainContent = false;
-  let skipNext = false;
-  let inReviewSection = false;
+  const lines = markdown.split('\n')
+  const content = []
+  let inMainContent = false
+  let skipNext = false
+  let inReviewSection = false
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i]
 
     // Skip navigation and header elements
     if (line.includes('navbar') || line.includes('drawer') || line.includes('breadcrumb')) {
-      skipNext = true;
-      continue;
+      skipNext = true
+      continue
     }
 
     // Skip forms (contact forms should be handled by layout)
@@ -29,47 +28,47 @@ const extractMainContent = (markdown, contentType) => {
         line.includes('**Email: \\*') || line.includes('**Product Enquiry:') ||
         line.includes('**Your Postcode:') || line.includes('**Message:') ||
         line.includes('**Captcha:')) {
-      break;
+      break
     }
 
     // Detect start of review section and skip until we hit "Our Prices!" or new heading
     if (line.includes('Our Reviews!')) {
-      inReviewSection = true;
-      continue;
+      inReviewSection = true
+      continue
     }
 
     // Exit review section when we hit "Our Prices!" or a main heading
     if (inReviewSection && (line.includes('Our Prices!') || line.match(/^# [A-Z]/))) {
-      inReviewSection = false;
+      inReviewSection = false
       // Don't skip "Our Prices!" - we want to keep it
     }
 
     // Skip content while in review section
     if (inReviewSection) {
-      continue;
+      continue
     }
 
     // Skip footer content
     if (line.includes('footer') || line.includes('widget_section')) {
-      break;
+      break
     }
 
     // Look for main content indicators based on content type
     if (contentType === 'blog' && (line.includes('# ') || line.includes('Posted By:'))) {
-      inMainContent = true;
+      inMainContent = true
     } else if ((contentType === 'page' || contentType === 'product' || contentType === 'category') && line.includes('# ')) {
-      inMainContent = true;
+      inMainContent = true
     }
 
     if (inMainContent && !skipNext) {
-      content.push(line);
+      content.push(line)
     }
 
-    skipNext = false;
+    skipNext = false
   }
 
-  return content.join('\n').trim();
-};
+  return content.join('\n').trim()
+}
 
 /**
  * Remove product listings from category content
@@ -86,13 +85,13 @@ const extractMainContent = (markdown, contentType) => {
 const removeProductListings = (content) => {
   // Remove everything from "#### Showing" to the end of the content
   // This section contains the product grid
-  content = content.replace(/####\s+Showing\s+\d+\s+results[\s\S]*$/i, '');
+  content = content.replace(/####\s+Showing\s+\d+\s+results[\s\S]*$/i, '')
 
   // Also remove any remaining product link patterns
-  content = content.replace(/\[]\([^)]*\/products\/[^)]+\.php\.html[^)]*\)[\s\S]*?\[More Details]\([^)]+\)/g, '');
+  content = content.replace(/\[]\([^)]*\/products\/[^)]+\.php\.html[^)]*\)[\s\S]*?\[More Details]\([^)]+\)/g, '')
 
-  return content;
-};
+  return content
+}
 
 /**
  * Clean up content by removing unwanted markdown artifacts
@@ -103,15 +102,15 @@ const removeProductListings = (content) => {
 const cleanContent = (content, contentType) => {
   // Remove product listings from category pages
   if (contentType === 'category') {
-    content = removeProductListings(content);
+    content = removeProductListings(content)
   }
 
   // For blog posts, remove H4 breadcrumb titles
   if (contentType === 'blog') {
-    content = content.replace(/^####\s+.+$/gm, '');
+    content = content.replace(/^####\s+.+$/gm, '')
   }
 
-  content = content.trim();
+  content = content.trim()
 
   return content
     .replace(/Posted By:.*?\n/g, '') // Remove blog post metadata
@@ -132,8 +131,8 @@ const cleanContent = (content, contentType) => {
     .replace(/\(\.\.\/([^)]+)\.php\.html\)/g, '(/$1/)')
     // Normalize whitespace
     .replace(/\n\s*\n\s*\n/g, '\n\n')
-    .trim();
-};
+    .trim()
+}
 
 /**
  * Process raw markdown to extract and clean content
@@ -143,24 +142,24 @@ const cleanContent = (content, contentType) => {
  * @returns {string} Processed and cleaned content
  */
 const processContent = (markdown, contentType, htmlContent = null) => {
-  const extracted = extractMainContent(markdown, contentType);
-  let cleaned = cleanContent(extracted, contentType);
+  const extracted = extractMainContent(markdown, contentType)
+  let cleaned = cleanContent(extracted, contentType)
 
   // For products, extract tables from HTML and inject into markdown content
   if (contentType === 'product' && htmlContent) {
-    const specs = extractSpecificationTable(htmlContent);
-    const prices = extractPriceTable(htmlContent);
+    const specs = extractSpecificationTable(htmlContent)
+    const prices = extractPriceTable(htmlContent)
 
     // Remove the placeholder sections and replace with HTML-extracted content
-    cleaned = cleaned.replace(/Product Specifications![\s\S]*?(?=Our Prices!|$)/i, specs + '\n\n');
-    cleaned = cleaned.replace(/Our Prices![\s\S]*?(?=\n\n-{5,}|$)/i, prices);
+    cleaned = cleaned.replace(/Product Specifications![\s\S]*?(?=Our Prices!|$)/i, specs + '\n\n')
+    cleaned = cleaned.replace(/Our Prices![\s\S]*?(?=\n\n-{5,}|$)/i, prices)
   }
 
-  return cleaned;
-};
+  return cleaned
+}
 
 module.exports = {
   extractMainContent,
   cleanContent,
   processContent
-};
+}
