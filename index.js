@@ -12,6 +12,7 @@ const { convertPages, convertBlogPosts, convertProducts, convertCategories, conv
 const { extractFavicons } = require('./utils/favicon-extractor');
 const { applyFindReplacesRecursive } = require('./utils/find-replace');
 const ResultsTracker = require('./utils/results-tracker');
+const { getExporter } = require('./utils/json-exporter');
 const config = require('./config');
 
 /**
@@ -91,13 +92,22 @@ const main = async () => {
     tracker.add('Reviews Index', await convertReviewsIndex());
     console.log('');
 
-    console.log('Applying find/replace patterns to markdown files...');
-    const targetDirs = ['pages', 'products', 'categories', 'news'];
-    targetDirs.forEach(dir => {
-      const dirPath = path.join(config.OUTPUT_BASE, dir);
-      applyFindReplacesRecursive(dirPath);
-    });
-    console.log('✓ Find/replace patterns applied\n');
+    // Handle output format-specific tasks
+    if (config.OUTPUT_FORMAT === 'json') {
+      // Write JSON export
+      const exporter = getExporter();
+      const jsonPath = path.join(config.OUTPUT_BASE, 'content.json');
+      exporter.writeJson(jsonPath);
+    } else {
+      // Apply find/replace patterns to markdown files
+      console.log('Applying find/replace patterns to markdown files...');
+      const targetDirs = ['pages', 'products', 'categories', 'news'];
+      targetDirs.forEach(dir => {
+        const dirPath = path.join(config.OUTPUT_BASE, dir);
+        applyFindReplacesRecursive(dirPath);
+      });
+      console.log('✓ Find/replace patterns applied\n');
+    }
 
     tracker.displaySummary();
 

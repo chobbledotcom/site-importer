@@ -6,6 +6,9 @@ const config = {
   OLD_SITE_PATH: path.join(__dirname, 'old_site'),
   OUTPUT_BASE: path.join(__dirname, 'output'),
 
+  // Output format: 'markdown' or 'json'
+  OUTPUT_FORMAT: process.env.OUTPUT_FORMAT || 'markdown',
+
   // Default values for content
   DEFAULT_DATE: '2020-01-01',
 

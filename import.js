@@ -2,21 +2,32 @@
 
 /**
  * Main import script
- * Usage: npm run import https://www.myalarmsecurity.co.uk
+ * Usage: npm run import https://www.myalarmsecurity.co.uk [--format=json]
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const SITE_URL = process.argv[2];
+// Parse arguments
+const args = process.argv.slice(2);
+const SITE_URL = args.find(arg => !arg.startsWith('--'));
+const formatArg = args.find(arg => arg.startsWith('--format='));
+const OUTPUT_FORMAT = formatArg ? formatArg.split('=')[1] : 'markdown';
+
 const OLD_SITE_DIR = path.join(__dirname, 'old_site');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 
 if (!SITE_URL) {
   console.error('❌ ERROR: No URL provided!');
-  console.error('Usage: npm run import <url>');
+  console.error('Usage: npm run import <url> [--format=json|markdown]');
   console.error('Example: npm run import https://www.myalarmsecurity.co.uk');
+  console.error('Example: npm run import https://www.myalarmsecurity.co.uk --format=json');
+  process.exit(1);
+}
+
+if (!['markdown', 'json'].includes(OUTPUT_FORMAT)) {
+  console.error('❌ ERROR: Invalid format! Must be "markdown" or "json"');
   process.exit(1);
 }
 
@@ -76,7 +87,11 @@ try {
   process.exit(1);
 }
 
-// Step 5: Run the converter
+// Step 5: Set output format in environment
+process.env.OUTPUT_FORMAT = OUTPUT_FORMAT;
+console.log(`📝 Output format: ${OUTPUT_FORMAT}\n`);
+
+// Step 6: Run the converter
 console.log('🔄 Converting content...\n');
 try {
   const { main } = require('./index.js');

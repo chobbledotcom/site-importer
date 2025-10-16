@@ -20,6 +20,8 @@ brew install wget pandoc
 
 ## Usage
 
+### Markdown Output (default)
+
 ```bash
 npm run import <url>
 ```
@@ -28,6 +30,19 @@ Example:
 ```bash
 npm run import https://www.myalarmsecurity.co.uk
 ```
+
+### JSON Output
+
+```bash
+npm run import <url> --format=json
+```
+
+Example:
+```bash
+npm run import https://www.myalarmsecurity.co.uk --format=json
+```
+
+This will create a single `content.json` file with all content and images still downloaded to the images directory.
 
 ## What it does
 
@@ -40,15 +55,42 @@ npm run import https://www.myalarmsecurity.co.uk
 
 ## Output Structure
 
+### Markdown Format (default)
+
 ```
 output/
-├── pages/          # Static pages
-├── news/           # Blog posts
-├── products/       # Product pages
-├── categories/     # Category pages
+├── pages/          # Static pages as .md files
+├── news/           # Blog posts as .md files
+├── products/       # Product pages as .md files
+├── categories/     # Category pages as .md files
 ├── images/         # Downloaded images
 └── assets/
     └── favicon/    # Favicon files
+```
+
+### JSON Format
+
+```
+output/
+├── content.json    # Single JSON file with all content
+├── images/         # Downloaded images
+└── assets/
+    └── favicon/    # Favicon files
+```
+
+The JSON file structure:
+```json
+{
+  "pages": [...],
+  "news": [...],
+  "products": [...],
+  "categories": [...],
+  "home": {...},
+  "metadata": {
+    "exported_at": "2025-10-16T12:00:00.000Z",
+    "format_version": "1.0"
+  }
+}
 ```
 
 ## Configuration

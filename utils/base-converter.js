@@ -3,6 +3,8 @@ const { readHtmlFile, writeMarkdownFile, slugFromFilename, markdownFilename } = 
 const { extractMetadata } = require('./metadata-extractor');
 const { convertToMarkdown } = require('./pandoc-converter');
 const { processContent } = require('./content-processor');
+const { getExporter } = require('./json-exporter');
+const config = require('../config');
 
 /**
  * Create a converter for a specific content type
@@ -68,10 +70,36 @@ const createConverter = ({
       const frontmatter = result.frontmatter || result;
       filename = result.filename || filename;
 
-      const fullContent = `${frontmatter}\n\n${content}`;
+      // Handle output format
+      if (config.OUTPUT_FORMAT === 'json') {
+        // Collect data for JSON export
+        const exporter = getExporter();
+        const itemData = {
+          slug,
+          filename,
+          metadata,
+          content,
+          ...extracted
+        };
 
-      writeMarkdownFile(path.join(outputDir, filename), fullContent);
-      console.log(`  Converted: ${filename}`);
+        // Add to appropriate collection
+        if (contentType === 'page') {
+          exporter.addPage(itemData);
+        } else if (contentType === 'blog') {
+          exporter.addNews(itemData);
+        } else if (contentType === 'product') {
+          exporter.addProduct(itemData);
+        } else if (contentType === 'category') {
+          exporter.addCategory(itemData);
+        }
+
+        console.log(`  Collected: ${filename}`);
+      } else {
+        // Write markdown file
+        const fullContent = `${frontmatter}\n\n${content}`;
+        writeMarkdownFile(path.join(outputDir, filename), fullContent);
+        console.log(`  Converted: ${filename}`);
+      }
 
       // Hook after conversion (e.g., track reviews)
       if (afterConvert) {
