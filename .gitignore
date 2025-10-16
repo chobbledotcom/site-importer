@@ -1,6 +1,7 @@
 # Importer directories
 old_site/
-output/
+output/*
+!output/content.json
 wget_temp/
 
 # Node
