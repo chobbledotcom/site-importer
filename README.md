@@ -1,15 +1,25 @@
 # Site Importer
 
-Modular site conversion tool for turning websites into Chobble Template ones
+Universal website content extraction and conversion tool. Downloads any website and converts it to structured markdown or JSON format.
 
-## Structure
+## Quick Start
 
-The importer is organized into separate modules for better maintainability and parallel development:
+```bash
+# Import a website as markdown files
+npm run import https://www.example.com
+
+# Import as JSON
+npm run import https://www.example.com --format=json
+```
+
+For detailed usage instructions, see [USAGE.md](USAGE.md).
+
+## Project Structure
 
 ```
-scripts/importer/
-├── config.js                 # Configuration and paths
-├── index.js                  # Main orchestrator
+site-importer/
+├── import.js                 # Entry point - handles downloads and orchestration
+├── index.js                  # Main converter orchestrator
 ├── converters/
 │   ├── index.js                  # Exports all converters
 │   ├── page-converter.js         # Converts static pages
@@ -20,138 +30,365 @@ scripts/importer/
 │   ├── home-converter.js         # Converts homepage content
 │   ├── blog-index-converter.js   # Generates blog index
 │   └── reviews-index-converter.js # Generates reviews index
-└── utils/
-    ├── filesystem.js         # File operations
-    ├── metadata-extractor.js # HTML metadata extraction
-    ├── pandoc-converter.js   # HTML to Markdown conversion
-    ├── content-processor.js  # Content cleaning and extraction
-    ├── frontmatter-generator.js # YAML frontmatter generation
-    ├── image-downloader.js   # Downloads embedded images
-    └── favicon-extractor.js  # Extracts favicon files
+├── utils/
+│   ├── base-converter.js         # Base class for all converters
+│   ├── category-scanner.js       # Scans for product categories
+│   ├── cli-args.js               # Command-line argument parsing
+│   ├── content-processor.js      # Content cleaning and extraction
+│   ├── directory-cleaner.js      # Output directory management
+│   ├── favicon-extractor.js      # Extracts favicon files
+│   ├── filesystem.js             # File operations
+│   ├── frontmatter-generator.js  # YAML frontmatter generation
+│   ├── html-patterns.js          # HTML selector patterns
+│   ├── html-table-extractor.js   # Extracts data from HTML tables
+│   ├── image-downloader.js       # Downloads embedded images
+│   ├── json-exporter.js          # Exports data as JSON
+│   ├── markdown-table-parser.js  # Parses markdown tables
+│   ├── markdown-writer.js        # Writes markdown files
+│   ├── metadata-extractor.js     # HTML metadata extraction
+│   ├── pandoc-converter.js       # HTML to Markdown via pandoc
+│   ├── results-tracker.js        # Tracks conversion results
+│   ├── site-downloader.js        # Downloads websites using wget
+│   └── test-runner.js            # Test execution framework
+└── tests/
+    ├── data-structure-tests.js   # Validates internal data structure
+    └── markdown-output-tests.js  # Validates markdown output files
 ```
 
-## Usage
+## How It Works
 
-Run the conversion:
-```bash
-# From project root
-npm run convert-old-site
+1. **Download Phase** (`import.js`)
+   - Checks if `old_site/` directory exists
+   - If not, downloads the website using `wget` with mirror settings
+   - Caches downloaded site for future runs (much faster)
 
-# Or directly
-node scripts/importer/index.js
+2. **Conversion Phase** (`index.js`)
+   - Extracts favicons and assets
+   - Processes homepage content
+   - Converts static pages, blog posts, products, and categories
+   - Generates special pages and index pages
+   - Builds internal data structure
+
+3. **Validation Phase** (`tests/`)
+   - Validates data structure integrity
+   - Checks for duplicate slugs, missing fields
+   - Validates frontmatter format
+   - Verifies image references (markdown mode only)
+
+4. **Output Phase**
+   - **Markdown mode**: Writes individual `.md` files with YAML frontmatter
+   - **JSON mode**: Writes single `content.json` file with all data
+   - Downloads and organizes images
+
+## Output Structure
+
+### Markdown Format (default)
+
+```
+output/
+├── pages/          # Static pages with frontmatter
+├── news/           # Blog posts converted to news items
+├── products/       # Product pages with pricing
+├── categories/     # Category landing pages
+├── images/         # Downloaded and organized images
+└── assets/
+    └── favicon/    # Favicon files
 ```
 
-## Folder Cleaning Behavior
+### JSON Format
 
-The importer uses smart cleanup to preserve non-imported files:
-
-**Full cleanup (all files):**
-- `images/` - Completely removed and recreated (including subdirectories)
-- `news/` - All files removed (only contains imported blog posts)
-- `products/` - All files removed (only contains imported products)
-- `categories/` - All files removed (only contains imported categories)
-- `pages/` - All files removed (all pages now generated from old_site or by special-pages-converter)
-- `assets/favicon/` - All files removed (only contains imported favicons)
-
-**Selective cleanup (only imported files):**
-- `reviews/` - Only deletes product reviews from old_site (preserves Google reviews with `-google-` in filename)
-
-**Protected folders (never touched):**
-- `.git/`, `scripts/`, `old_site/`, `css/`, `app/`, `_data/`, `_includes/`, `_layouts/`
-
-**How it works:**
-
-The `prepDir()` function accepts an optional filter function:
-```javascript
-prepDir(dir, shouldDelete)  // shouldDelete(filename) returns true to delete
+```
+output/
+├── content.json    # Single file with all structured data
+├── images/         # Downloaded images
+└── assets/
+    └── favicon/    # Favicon files
 ```
 
-Examples:
-```javascript
-// Delete all files
-prepDir(outputDir);
+The JSON structure includes pages, news, products, categories, home content, and metadata.
 
-// Delete only specific files (preserve others)
-const googleReviews = (filename) => !filename.includes('-google-');
-prepDir(outputDir, googleReviews);
-```
+## Architecture
 
-This ensures:
-- Fresh content on each import
-- No stale files from previous runs
-- Google reviews are not deleted
-- Protected folders remain intact
+### Entry Point (`import.js`)
+The main entry point that:
+- Parses command-line arguments (`--format=json`)
+- Manages the `old_site/` download cache
+- Downloads websites using `wget` when needed
+- Cleans and prepares the `output/` directory
+- Orchestrates the conversion process
+- Runs validation tests
 
-## Module Responsibilities
+### Main Orchestrator (`index.js`)
+Coordinates all converters in the correct order:
+1. Favicon extraction
+2. Homepage content
+3. Static pages
+4. Special pages
+5. Blog posts
+6. Products and categories
+7. Index pages
 
-### Config (`config.js`)
-- Defines input/output paths
-- Stores default values
-- Central configuration
+Handles both markdown and JSON output modes.
 
 ### Converters
-Each converter handles a specific content type:
-- **page-converter**: Static pages from old_site/pages/
-- **special-pages-converter**: Generates special pages (home, products, service-areas, not-found, thank-you, blog, reviews) from old_site data
-- **blog-converter**: Blog posts → news articles
-- **product-converter**: Product pages with pricing
-- **category-converter**: Category landing pages
-- **home-converter**: Homepage content (banners, features, etc.)
-- **blog-index-converter**: Blog index page
-- **reviews-index-converter**: Reviews index page
 
-### Utils
+All converters extend `BaseConverter` which provides:
+- HTML file loading and parsing
+- Metadata extraction
+- Content processing
+- Result tracking
 
-#### `filesystem.js`
-- Directory creation
-- File reading/writing
-- HTML file listing
+**Content Type Converters:**
+- `page-converter.js` - Static pages from the site
+- `blog-converter.js` - Blog posts to news articles
+- `product-converter.js` - Product pages with pricing and specs
+- `category-converter.js` - Category landing pages
+- `home-converter.js` - Homepage banners, features, sections
+- `special-pages-converter.js` - Generates special pages from data
+- `blog-index-converter.js` - Creates blog listing page
+- `reviews-index-converter.js` - Creates reviews listing page
 
-#### `metadata-extractor.js`
-- Extracts title, description, og:tags
-- Extracts prices (products)
-- Extracts categories (products)
-- Extracts dates (blog posts)
+### Utilities
 
-#### `pandoc-converter.js`
-- Converts HTML to Markdown via pandoc
+**Content Processing:**
+- `content-processor.js` - Removes navigation, cleans HTML, normalizes whitespace
+- `metadata-extractor.js` - Extracts titles, descriptions, prices, dates, og:tags
+- `pandoc-converter.js` - HTML to Markdown conversion wrapper
+- `frontmatter-generator.js` - Generates YAML frontmatter
 
-#### `content-processor.js`
-- Removes navigation/footer elements
-- Cleans inline styles
-- Removes pandoc artifacts
-- Normalizes whitespace
+**Data Extraction:**
+- `html-table-extractor.js` - Extracts structured data from HTML tables
+- `markdown-table-parser.js` - Parses markdown table syntax
+- `category-scanner.js` - Scans for product categories
+- `html-patterns.js` - Common HTML selector patterns
 
-#### `frontmatter-generator.js`
-- Generates YAML frontmatter for each content type
-- Ensures consistent field ordering
+**I/O Operations:**
+- `filesystem.js` - File reading, writing, directory management
+- `site-downloader.js` - Website downloading via wget
+- `image-downloader.js` - Downloads and organizes images
+- `favicon-extractor.js` - Extracts favicon files
+- `directory-cleaner.js` - Cleans output directories
 
-## Adding New Features
+**Export & Output:**
+- `json-exporter.js` - Manages JSON export with data collection
+- `markdown-writer.js` - Writes markdown files with frontmatter
 
-### To modify content cleaning:
-Edit `utils/content-processor.js`
+**Testing & Validation:**
+- `test-runner.js` - Test execution framework
+- `results-tracker.js` - Tracks conversion statistics
+- `cli-args.js` - Command-line argument parsing
 
-### To add new metadata fields:
+### Tests
+
+**Data Structure Tests (`tests/data-structure-tests.js`):**
+- Validates all required fields present
+- Checks for duplicate slugs
+- Verifies frontmatter structure
+- Ensures content has H1 headings
+- Validates metadata completeness
+
+**Markdown Output Tests (`tests/markdown-output-tests.js`):**
+- Verifies file structure
+- Validates YAML frontmatter syntax
+- Checks image references exist
+- Ensures proper filename formatting
+- Verifies no duplicate files
+
+## Extending the Importer
+
+### Adding a New Content Type
+
+1. **Create a converter** in `converters/`:
+```javascript
+const BaseConverter = require('../utils/base-converter')
+
+class NewTypeConverter extends BaseConverter {
+  async convert() {
+    const files = this.loadHtmlFiles('new-type')
+    // Process files...
+    return { converted: files.length, failed: 0 }
+  }
+}
+
+module.exports = NewTypeConverter
+```
+
+2. **Export from** `converters/index.js`:
+```javascript
+const convertNewType = require('./new-type-converter')
+module.exports = { convertNewType, /* ... */ }
+```
+
+3. **Add to orchestrator** in `index.js`:
+```javascript
+tracker.add('New Type', await convertNewType())
+```
+
+### Modifying Content Processing
+
+Edit `utils/content-processor.js` to:
+- Remove additional HTML elements
+- Clean specific patterns
+- Normalize content structure
+
+### Adding Metadata Fields
+
 1. Extract in `utils/metadata-extractor.js`
 2. Add to frontmatter in `utils/frontmatter-generator.js`
-3. Update relevant converter
+3. Update relevant converter to use new fields
 
-### To add a new content type:
-1. Create `converters/new-type-converter.js`
-2. Export from `converters/index.js`
-3. Add to orchestrator in `index.js`
+### Custom HTML Selectors
 
-## Dependencies
+Add patterns to `utils/html-patterns.js` for reusable selectors across converters.
 
-- Node.js built-in modules only
-- pandoc (system dependency for HTML→Markdown conversion)
+## Requirements
 
-## Output
+### System Dependencies
+- **Node.js 14+** - JavaScript runtime
+- **pandoc** - HTML to Markdown conversion
+- **wget** - Website downloading
 
-Converted files are placed in:
-- `/pages/` - Static pages
-- `/news/` - Blog posts
-- `/products/` - Product pages
-- `/categories/` - Category pages
+### Installation
 
-Each file includes appropriate Jekyll frontmatter.
+**Ubuntu/Debian:**
+```bash
+apt-get install nodejs pandoc wget
+```
+
+**macOS:**
+```bash
+brew install node pandoc wget
+```
+
+**Windows:**
+- Install Node.js from [nodejs.org](https://nodejs.org/)
+- Install pandoc from [pandoc.org](https://pandoc.org/installing.html)
+- Install wget from [gnu.org/software/wget](https://www.gnu.org/software/wget/)
+
+### Node Dependencies
+None! This project uses only Node.js built-in modules for simplicity and portability.
+
+## Development Workflow
+
+**First run** - Downloads the website:
+```bash
+npm run import https://www.example.com
+```
+
+**Subsequent runs** - Reuses cached site (much faster):
+```bash
+npm run import https://www.example.com
+```
+
+**Force re-download** - Delete the cache first:
+```bash
+rm -rf old_site
+npm run import https://www.example.com
+```
+
+**Test changes without download**:
+```bash
+# After first download, just run the converter directly
+node index.js
+```
+
+## Testing
+
+Tests run automatically after each conversion. They validate:
+
+- Data structure integrity (all modes)
+- Required fields present
+- No duplicate slugs
+- Valid frontmatter format
+- Markdown file structure (markdown mode only)
+- Image references exist
+
+To run tests manually:
+```bash
+# Run data structure tests
+node tests/data-structure-tests.js
+
+# Run markdown output tests (after markdown conversion)
+node tests/markdown-output-tests.js
+```
+
+## Output Examples
+
+### Markdown File Format
+
+```markdown
+---
+title: "Product Name"
+description: "Product description for SEO"
+layout: product
+price: "£199.99"
+categories: ["category-name"]
+image: "/images/products/product-image.jpg"
+---
+
+# Product Name
+
+Product content in markdown format...
+```
+
+### JSON Export Format
+
+```json
+{
+  "pages": [
+    {
+      "title": "About Us",
+      "slug": "about",
+      "content": "# About Us\n\nOur story...",
+      "description": "Learn about our company"
+    }
+  ],
+  "products": [...],
+  "news": [...],
+  "categories": [...],
+  "home": {...},
+  "metadata": {
+    "exported_at": "2025-10-17T12:00:00.000Z",
+    "format_version": "1.0"
+  }
+}
+```
+
+## Features
+
+- **Universal website support** - Works with any HTML website
+- **Smart caching** - Downloads once, converts many times
+- **Dual output formats** - Markdown files or single JSON file
+- **Automatic validation** - Built-in tests ensure quality output
+- **Image downloading** - Extracts and downloads all images
+- **Favicon extraction** - Captures all favicon variants
+- **Metadata preservation** - Extracts SEO metadata, prices, dates
+- **Clean conversion** - Removes navigation, footers, inline styles
+- **Product support** - Extracts pricing, categories, specifications
+- **Blog support** - Converts blog posts with dates and authors
+- **No dependencies** - Uses only Node.js built-in modules
+
+## Troubleshooting
+
+**"pandoc is not installed"**
+- Install pandoc using your system's package manager
+- Verify with: `pandoc --version`
+
+**"wget command failed"**
+- Ensure wget is installed
+- Check the URL is accessible
+- Try downloading manually first to test
+
+**"No files found in old_site/"**
+- Check if the download completed successfully
+- Verify the URL structure is supported by wget
+- Look for HTML files in `old_site/` subdirectories
+
+**Tests failing**
+- Review test output for specific validation errors
+- Check that all required fields are extracted
+- Verify frontmatter YAML syntax is valid
+
+## License
+
+ISC - Terragon Labs
