@@ -1,6 +1,6 @@
 # Site Importer
 
-Modular site conversion tool for migrating content from the old MyAlarm Security site to the new Jekyll-based site.
+Modular site conversion tool for turning websites into Chobble Template ones
 
 ## Structure
 
