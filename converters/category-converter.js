@@ -1,5 +1,4 @@
 const path = require('path')
-const config = require('../config')
 const { listHtmlFiles } = require('../utils/filesystem')
 const { extractCategoryName, extractContentHeading } = require('../utils/metadata-extractor')
 const { generateCategoryFrontmatter } = require('../utils/frontmatter-generator')
@@ -27,8 +26,8 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertCategories = async () => {
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.categories)
-  const categoriesDir = path.join(config.OLD_SITE_PATH, config.paths.categories)
+  const outputDir = path.join(__dirname, '..', 'output', 'categories')
+  const categoriesDir = path.join(__dirname, '..', 'old_site', 'categories')
   const files = listHtmlFiles(categoriesDir)
 
   if (files.length === 0) {

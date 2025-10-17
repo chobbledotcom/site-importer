@@ -1,4 +1,3 @@
-const { PRODUCT_ORDER } = require('../constants')
 
 /**
  * Configuration for page-specific layouts, navigation, and metadata
@@ -87,23 +86,24 @@ permalink: "/blog/${slug}/"`
  * @param {string} productName - Product name
  * @param {Object} images - Product images with local paths
  * @param {string} productHeading - The H1 heading from product content
+ * @param {number} productOrder - Product display order (from category page position)
  * @returns {string} Frontmatter YAML
  */
-const generateProductFrontmatter = (metadata, slug, price, categories, productName, images = null, _productHeading = null) => {
+const generateProductFrontmatter = (metadata, slug, price, categories, productName, images = null, _productHeading = null, productOrder = null) => {
   // Ensure categories is an array
   const categoryArray = Array.isArray(categories) ? categories : (categories ? [categories] : [])
   const categoriesYaml = categoryArray.length > 0
     ? `[${categoryArray.map(c => `"${c}"`).join(', ')}]`
     : '[]'
 
-  // Get product order, default to 50 if not in mapping
-  const productOrder = PRODUCT_ORDER[slug] || 50
+  // Use provided order or default to 50
+  const order = productOrder !== null && productOrder !== undefined ? productOrder : 50
 
   // Base frontmatter
   let frontmatter = `---
 title: "${productName || metadata.title || ''}"
 price: "${price}"
-order: ${productOrder}
+order: ${order}
 meta_title: "${metadata.title || ''}"
 meta_description: "${metadata.meta_description || ''}"
 permalink: "/products/${slug}/"
@@ -128,8 +128,7 @@ features: []`
  * @returns {string} Frontmatter YAML
  */
 const generateCategoryFrontmatter = (metadata, slug, categoryHeading = null, categoryIndex = 0) => {
-  const config = require('../config')
-
+  
   let frontmatter = `---
 title: "${metadata.title || ''}"
 meta_title: "${metadata.title || ''}"
@@ -138,7 +137,7 @@ permalink: "/categories/${slug}/"
 featured: false`
 
   // Add navigation if categoriesInNavigation option is enabled
-  if (config.options.categoriesInNavigation) {
+  if (false) {
     const navOrder = 20 + categoryIndex
     frontmatter += `
 eleventyNavigation:

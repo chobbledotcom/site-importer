@@ -1,6 +1,5 @@
 const path = require('path')
 const { ensureDir, downloadFile } = require('./filesystem')
-const config = require('../config')
 
 /**
  * Remove Cloudinary transformation parameters to get original source URL
@@ -36,7 +35,7 @@ const downloadImage = async (imageUrl, contentType, slug, filename = null) => {
   if (!imageUrl) return ''
 
   const sourceUrl = removeCloudinaryTransformations(imageUrl)
-  const imagesDir = path.join(config.OUTPUT_BASE, 'images', contentType)
+  const imagesDir = path.join(path.join(__dirname, '..', 'output'), 'images', contentType)
   ensureDir(imagesDir)
 
   const finalFilename = filename || generateImageFilename(sourceUrl, contentType, slug)

@@ -1,5 +1,4 @@
 const path = require('path')
-const config = require('../config')
 const { ensureDir, writeMarkdownFile } = require('../utils/filesystem')
 
 /**
@@ -10,7 +9,7 @@ const { ensureDir, writeMarkdownFile } = require('../utils/filesystem')
 const convertBlogIndex = () => {
   console.log('Creating blog index page...')
 
-  const outputDir = path.join(config.OUTPUT_BASE, 'pages')
+  const outputDir = path.join(path.join(__dirname, '..', 'output'), 'pages')
   ensureDir(outputDir)
 
   const frontmatter = `---

@@ -1,5 +1,4 @@
 const path = require('path')
-const config = require('../config')
 const { listHtmlFiles } = require('../utils/filesystem')
 const { extractPrice, extractReviews, extractProductName, extractProductImages, extractContentHeading } = require('../utils/metadata-extractor')
 const { generateProductFrontmatter } = require('../utils/frontmatter-generator')
@@ -16,8 +15,9 @@ const { convertSingle, convertBatch } = createConverter({
     productHeading: (htmlContent) => extractContentHeading(htmlContent),
     images: (htmlContent) => extractProductImages(htmlContent)
   },
-  frontmatterGenerator: (metadata, slug, extracted) => {
-    const categories = extracted.productCategoriesMap?.get(slug) || []
+  frontmatterGenerator: (metadata, slug, extracted, context) => {
+    const categories = context.productCategoriesMap?.get(slug) || []
+    const productOrder = context.productOrderMap?.get(slug)
     const localImages = { header_image: extracted.localImagePath }
     return generateProductFrontmatter(
       metadata,
@@ -26,7 +26,8 @@ const { convertSingle, convertBatch } = createConverter({
       categories,
       extracted.productName,
       localImages,
-      extracted.productHeading
+      extracted.productHeading,
+      productOrder
     )
   },
   beforeWrite: async (content, extracted, slug) => {
@@ -64,8 +65,8 @@ const convertProduct = (file, inputDir, outputDir, reviewsDir, reviewsMap, produ
  * @returns {Promise<Object>} Conversion results
  */
 const convertProducts = async () => {
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.products)
-  const productsDir = path.join(config.OLD_SITE_PATH, config.paths.products)
+  const outputDir = path.join(__dirname, '..', 'output', 'products')
+  const productsDir = path.join(__dirname, '..', 'old_site', 'products')
   const files = listHtmlFiles(productsDir)
 
   if (files.length === 0) {
@@ -73,9 +74,9 @@ const convertProducts = async () => {
     return { successful: 0, failed: 0, total: 0 }
   }
 
-  const productCategoriesMap = scanProductCategories()
+  const { productCategoriesMap, productOrderMap } = scanProductCategories()
   const reviewsMap = new Map()
-  const result = await convertBatch(files, productsDir, outputDir, { reviewsMap, productCategoriesMap })
+  const result = await convertBatch(files, productsDir, outputDir, { reviewsMap, productCategoriesMap, productOrderMap })
 
   if (reviewsMap.size > 0) {
     const { getExporter } = require('../utils/json-exporter')

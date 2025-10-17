@@ -1,5 +1,4 @@
 const path = require('path')
-const config = require('../config')
 const { ensureDir } = require('../utils/filesystem')
 const { generatePageFrontmatter } = require('../utils/frontmatter-generator')
 const { createConverter } = require('../utils/base-converter')
@@ -25,13 +24,13 @@ const { convertSingle } = createConverter({
 const convertReviewsIndex = async () => {
   console.log('Converting reviews page...')
 
-  const outputDir = path.join(config.OUTPUT_BASE, 'pages')
+  const outputDir = path.join(path.join(__dirname, '..', 'output'), 'pages')
   ensureDir(outputDir)
 
   try {
     const success = await convertSingle(
       'reviews.php.html',
-      config.OLD_SITE_PATH,
+      path.join(__dirname, '..', 'old_site'),
       outputDir
     )
     return { successful: success ? 1 : 0, failed: success ? 0 : 1, total: 1 }
