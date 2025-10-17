@@ -9,13 +9,11 @@ const path = require('path')
 const { execSync } = require('child_process')
 const { convertPages, convertBlogPosts, convertProducts, convertCategories, convertHomeContent, convertBlogIndex, convertReviewsIndex, convertSpecialPages } = require('./converters')
 const { extractFavicons } = require('./utils/favicon-extractor')
-const { applyFindReplacesRecursive } = require('./utils/find-replace')
 const ResultsTracker = require('./utils/results-tracker')
 const { getExporter } = require('./utils/json-exporter')
 const { writeMarkdownFiles } = require('./utils/markdown-writer')
 const { runDataStructureTests } = require('./tests/data-structure-tests')
 const { runMarkdownOutputTests } = require('./tests/markdown-output-tests')
-const config = require('./config')
 
 /**
  * Check if pandoc is installed
@@ -44,8 +42,9 @@ const main = async () => {
   const tracker = new ResultsTracker()
 
   try {
-    const oldSitePath = config.OLD_SITE_PATH
-    const faviconOutputPath = path.join(config.OUTPUT_BASE, config.paths.favicon)
+    const oldSitePath = path.join(__dirname, 'old_site')
+    const outputBase = path.join(__dirname, 'output')
+    const faviconOutputPath = path.join(outputBase, 'assets/favicon')
     tracker.add('Favicons', extractFavicons(oldSitePath, faviconOutputPath))
 
     tracker.add('Homepage Content', await convertHomeContent())
@@ -67,19 +66,12 @@ const main = async () => {
       process.exit(1)
     }
 
-    if (config.OUTPUT_FORMAT === 'json') {
-      const jsonPath = path.join(config.OUTPUT_BASE, 'content.json')
+    const outputFormat = process.env.OUTPUT_FORMAT
+    if (outputFormat === 'json') {
+      const jsonPath = path.join(outputBase, 'content.json')
       exporter.writeJson(jsonPath)
     } else {
       writeMarkdownFiles(exporter)
-
-      console.log('Applying find/replace patterns to markdown files...')
-      const targetDirs = ['pages', 'products', 'categories', 'news']
-      targetDirs.forEach(dir => {
-        const dirPath = path.join(config.OUTPUT_BASE, dir)
-        applyFindReplacesRecursive(dirPath)
-      })
-      console.log('✓ Find/replace patterns applied\n')
 
       const markdownTestsPassed = await runMarkdownOutputTests()
       if (!markdownTestsPassed) {

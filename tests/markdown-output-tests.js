@@ -1,13 +1,12 @@
 const fs = require('fs')
 const path = require('path')
 const { TestRunner } = require('../utils/test-runner')
-const config = require('../config')
 
 const runMarkdownOutputTests = () => {
   const runner = new TestRunner()
 
   const checkDirectory = (dir) => {
-    const dirPath = path.join(config.OUTPUT_BASE, dir)
+    const dirPath = path.join(path.join(__dirname, '..', 'output'), dir)
     if (!fs.existsSync(dirPath)) return []
 
     return fs.readdirSync(dirPath)
@@ -15,10 +14,10 @@ const runMarkdownOutputTests = () => {
       .map(f => ({ filename: f, path: path.join(dirPath, f) }))
   }
 
-  const pages = checkDirectory(config.paths.pages, 'pages')
-  const news = checkDirectory(config.paths.news, 'news')
-  const products = checkDirectory(config.paths.products, 'products')
-  const categories = checkDirectory(config.paths.categories, 'categories')
+  const pages = checkDirectory('pages', 'pages')
+  const news = checkDirectory('news', 'news')
+  const products = checkDirectory('products', 'products')
+  const categories = checkDirectory('categories', 'categories')
   const reviews = checkDirectory('reviews', 'reviews')
 
   runner.test('Markdown files were created', () => {
@@ -99,7 +98,7 @@ const runMarkdownOutputTests = () => {
 
       while ((match = imagePattern.exec(content)) !== null) {
         const imagePath = match[1]
-        const fullImagePath = path.join(config.OUTPUT_BASE, imagePath)
+        const fullImagePath = path.join(path.join(__dirname, '..', 'output'), imagePath)
 
         runner.assert(
           fs.existsSync(fullImagePath),

@@ -1,15 +1,16 @@
 const path = require('path')
-const config = require('../config')
 const { listHtmlFiles } = require('../utils/filesystem')
 const { extractBlogDate, extractBlogHeading, extractBlogImage } = require('../utils/metadata-extractor')
 const { generateBlogFrontmatter } = require('../utils/frontmatter-generator')
 const { downloadProductImage, downloadEmbeddedImages } = require('../utils/image-downloader')
 const { createConverter } = require('../utils/base-converter')
 
+const DEFAULT_DATE = '2020-01-01'
+
 const { convertSingle, convertBatch } = createConverter({
   contentType: 'blog',
   extractors: {
-    date: (htmlContent, markdown) => extractBlogDate(markdown, config.DEFAULT_DATE),
+    date: (htmlContent, markdown) => extractBlogDate(markdown, DEFAULT_DATE),
     blogHeading: (htmlContent) => extractBlogHeading(htmlContent),
     blogImage: (htmlContent, markdown) => extractBlogImage(markdown)
   },
@@ -30,8 +31,8 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertBlogPosts = async () => {
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.news)
-  const blogDir = path.join(config.OLD_SITE_PATH, config.paths.blog)
+  const outputDir = path.join(__dirname, '..', 'output', 'news')
+  const blogDir = path.join(__dirname, '..', 'old_site', 'blog')
   const files = listHtmlFiles(blogDir)
 
   const result = await convertBatch(files, blogDir, outputDir)

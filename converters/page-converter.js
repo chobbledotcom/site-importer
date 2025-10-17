@@ -1,5 +1,4 @@
 const path = require('path')
-const config = require('../config')
 const { listHtmlFiles } = require('../utils/filesystem')
 const { extractContentHeading } = require('../utils/metadata-extractor')
 const { generatePageFrontmatter } = require('../utils/frontmatter-generator')
@@ -23,16 +22,17 @@ const { convertSingle, convertBatch } = createConverter({
  * @returns {Promise<Object>} Conversion results
  */
 const convertPages = async () => {
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.pages)
-  const pagesDir = path.join(config.OLD_SITE_PATH, 'pages')
+  const oldSitePath = path.join(__dirname, '..', 'old_site')
+  const outputDir = path.join(__dirname, '..', 'output', 'pages')
+  const pagesDir = path.join(oldSitePath, 'pages')
   const pageFiles = listHtmlFiles(pagesDir)
 
   const rootPages = ['contact.php.html'].filter(file =>
-    fs.existsSync(path.join(config.OLD_SITE_PATH, file))
+    fs.existsSync(path.join(oldSitePath, file))
   )
 
   const pagesResult = await convertBatch(pageFiles, pagesDir, outputDir)
-  const rootResult = await convertBatch(rootPages, config.OLD_SITE_PATH, outputDir)
+  const rootResult = await convertBatch(rootPages, oldSitePath, outputDir)
 
   const result = {
     successful: pagesResult.successful + rootResult.successful,

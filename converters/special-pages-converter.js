@@ -1,13 +1,12 @@
 const path = require('path')
 const fs = require('fs')
-const config = require('../config')
 const { ensureDir, writeMarkdownFile } = require('../utils/filesystem')
 
 /**
  * Generate home.md from index.html metadata
  */
 const generateHomePage = () => {
-  const indexPath = path.join(config.OLD_SITE_PATH, 'index.html')
+  const indexPath = path.join(path.join(__dirname, '..', 'old_site'), 'index.html')
 
   if (!fs.existsSync(indexPath)) {
     console.log('  Warning: index.html not found, using default home page')
@@ -60,15 +59,14 @@ eleventyNavigation:
  * Generate products.md with minimal content (products listed by template)
  */
 const generateProductsPage = () => {
-  const config = require('../config')
-
+  
   let frontmatter = `---
 meta_title: "Security Packages | Burglar Alarms & CCTV | MyAlarm Security"
 meta_description: "Browse our complete range of security packages: burglar alarms, CCTV systems, and combined packages. Professional installation across South East London and Kent."
 permalink: "/products/"
 layout: products`
 
-  if (!config.options.categoriesInNavigation) {
+  if (!false) {
     frontmatter += `
 eleventyNavigation:
   key: Products
@@ -90,15 +88,14 @@ We offer a comprehensive range of security packages designed to protect your hom
  * Generate service-areas.md with short intro (areas listed by template)
  */
 const generateServiceAreasPage = () => {
-  const config = require('../config')
-
+  
   let frontmatter = `---
 meta_title: "Service Areas | Security Installation Across South East London & Kent"
 meta_description: "We provide professional burglar alarm and CCTV installation across South East London and Kent including Bexley, Dartford, Bromley, Orpington, Greenwich and surrounding areas."
 permalink: "/service-areas/"
 layout: service-areas.html`
 
-  if (!config.options.categoriesInNavigation) {
+  if (!false) {
     frontmatter += `
 eleventyNavigation:
   key: Service Areas
@@ -155,15 +152,14 @@ Your message has been sent - we will be in touch.
  * Generate blog index page
  */
 const generateBlogPage = () => {
-  const config = require('../config')
-
+  
   let frontmatter = `---
 meta_description:
 meta_title: News
 permalink: /blog/
 layout: blog`
 
-  if (!config.options.categoriesInNavigation) {
+  if (!false) {
     frontmatter += `
 eleventyNavigation:
   key: News
@@ -198,7 +194,7 @@ layout: reviews
 const convertSpecialPages = async () => {
   console.log('Generating special pages...')
 
-  const outputDir = path.join(config.OUTPUT_BASE, config.paths.pages)
+  const outputDir = path.join(path.join(__dirname, '..', 'output'), 'pages')
   ensureDir(outputDir)
 
   const pages = [
