@@ -1,52 +1,22 @@
 {
-  inputs = {
-    nixpkgs.url = "nixpkgs";
-  };
+  inputs.nixpkgs.url = "nixpkgs";
 
-  outputs =
-    { self, nixpkgs }:
+  outputs = { nixpkgs, ... }:
     let
-      systems = [ "x86_64-linux" ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-
-      makeEnvForSystem =
-        system:
-        let
-          pkgs = import nixpkgs { system = system; };
-
-          devDependencies = with pkgs; [
-            nodejs_24
-            biome
-          ];
-        in
-        {
-          inherit pkgs;
-          devEnv = {
-            inherit pkgs;
-            dependencies = devDependencies;
-          };
-        };
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
     in
     {
-      devShells = forAllSystems (
-        system:
-        let
-          env = makeEnvForSystem system;
-          inherit (env.devEnv)
-            pkgs
-            dependencies
-            ;
-        in
-        {
-          default = pkgs.mkShell {
-            buildInputs = dependencies;
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          nodejs_24
+          biome
+        ];
 
-            shellHook = ''
-              [ ! -d node_modules ] && npm install
-              git pull
-            '';
-          };
-        }
-      );
+        shellHook = ''
+          [ ! -d node_modules ] && npm install
+          git pull
+        '';
+      };
     };
 }
