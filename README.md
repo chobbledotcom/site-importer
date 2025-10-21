@@ -272,18 +272,18 @@ None! This project uses only Node.js built-in modules for simplicity and portabi
 
 **First run** - Downloads the website:
 ```bash
-npm run import https://www.example.com
+npm run import https://www.example.com -- --format=markdown
 ```
 
 **Subsequent runs** - Reuses cached site (much faster):
 ```bash
-npm run import https://www.example.com
+npm run import https://www.example.com -- --format=markdown
 ```
 
 **Force re-download** - Delete the cache first:
 ```bash
 rm -rf old_site
-npm run import https://www.example.com
+npm run import https://www.example.com -- --format=markdown
 ```
 
 **Test changes without download**:
