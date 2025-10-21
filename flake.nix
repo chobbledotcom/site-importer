@@ -1,7 +1,8 @@
 {
   inputs.nixpkgs.url = "nixpkgs";
 
-  outputs = { nixpkgs, ... }:
+  outputs =
+    { nixpkgs, ... }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -10,7 +11,7 @@
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
           nodejs_24
-          biome
+          pandoc
         ];
 
         shellHook = ''
